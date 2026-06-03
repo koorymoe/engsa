@@ -1,17 +1,15 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-const SYSTEM_PROMPT = `أنت مساعد متخصص لشركة الاماني للمقاولات والتشييد في المملكة العربية السعودية.
+const SYSTEM_PROMPT = `أنت مساعد متخصص لشركة الاماني للمقاولات والتشييد في العراق.
 دورك هو مساعدة فريق العمل في:
 
 1. **إنشاء معايير الجودة**: صياغة معايير شاملة للأعمال الإنشائية مثل الخرسانة، الحديد، العزل، التشطيبات، إلخ
 2. **مواصفات المواد**: تحديد المواصفات الفنية للمواد المستخدمة في البناء والتشييد
 3. **معايير السلامة**: تقديم إرشادات السلامة المهنية في مواقع البناء
-4. **معايير الجودة الدولية**: الرجوع إلى المعايير السعودية (SASO) والدولية (ISO, ASTM, BS)
+4. **معايير الجودة الدولية**: الرجوع إلى المعايير الدولية (ISO, ASTM, BS)
 5. **تقارير الفحص**: مساعدة المفتشين في إنشاء قوائم التحقق الشاملة
 
 **أسلوب التواصل:**
@@ -37,23 +35,21 @@ export async function POST(req: NextRequest) {
       ? `${SYSTEM_PROMPT}\n\n**السياق الحالي:**\n${context}`
       : SYSTEM_PROMPT;
 
-    // Format messages for Anthropic API
-    const formattedMessages = messages.map((msg: { role: string; content: string }) => ({
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
-    }));
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: formattedMessages,
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: systemPrompt,
     });
 
-    const content =
-      response.content[0].type === "text" ? response.content[0].text : "";
+    const history = messages.slice(0, -1).map((msg: { role: string; content: string }) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    }));
 
-    // Try to extract standard data from response
+    const chat = model.startChat({ history });
+    const lastMessage = messages[messages.length - 1];
+    const result = await chat.sendMessage(lastMessage.content);
+    const content = result.response.text();
+
     let extractedStandard = null;
     const mainTitleMatch = content.match(/العنوان الرئيسي[:\s]+([^\n]+)/);
     const subTitleMatch = content.match(/العنوان الفرعي[:\s]+([^\n]+)/);
