@@ -40,10 +40,14 @@ export async function POST(req: NextRequest) {
       systemInstruction: systemPrompt,
     });
 
-    const history = messages.slice(0, -1).map((msg: { role: string; content: string }) => ({
+    const allMessages = messages.slice(0, -1).map((msg: { role: string; content: string }) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
     }));
+
+    // Gemini requires history to start with 'user' role
+    const firstUserIndex = allMessages.findIndex((m: { role: string }) => m.role === "user");
+    const history = firstUserIndex >= 0 ? allMessages.slice(firstUserIndex) : [];
 
     const chat = model.startChat({ history });
     const lastMessage = messages[messages.length - 1];
