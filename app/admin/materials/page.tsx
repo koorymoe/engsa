@@ -169,7 +169,7 @@ export default function MaterialsPage() {
             {[
               { label: "إجمالي المواد", value: materials.length, icon: "🧱" },
               { label: "المواد الممتازة", value: materials.filter(m => ["A+", "ممتاز"].includes(m.quality_grade)).length, icon: "⭐" },
-              { label: "الموردون", value: [...new Set(materials.map(m => m.manufacturer))].length, icon: "🏭" },
+              { label: "الموردون", value: Array.from(new Set(materials.map(m => m.manufacturer))).length, icon: "🏭" },
             ].map(stat => (
               <div key={stat.label} className="glass-card p-4 flex items-center gap-4">
                 <span className="text-3xl">{stat.icon}</span>
