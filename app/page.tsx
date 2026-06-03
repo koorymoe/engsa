@@ -49,53 +49,16 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (role: string) => {
+  const handleDemoLogin = (role: string) => {
     setLoading(true);
-    setError("");
-    const demoEmails: Record<string, string> = {
-      admin: "admin@alamani.sa",
-      designer: "designer@alamani.sa",
-      engineer: "engineer@alamani.sa",
-      inspector: "inspector@alamani.sa",
+    const demoUsers: Record<string, object> = {
+      admin: { id: "demo-admin", email: "admin@alamani.sa", name: "أحمد العامر", role: "admin" },
+      designer: { id: "demo-designer", email: "designer@alamani.sa", name: "سارة المهندس", role: "designer" },
+      engineer: { id: "demo-engineer", email: "engineer@alamani.sa", name: "محمد التنفيذي", role: "engineer" },
+      inspector: { id: "demo-inspector", email: "inspector@alamani.sa", name: "فاطمة المفتش", role: "inspector" },
     };
-
-    try {
-      const { data } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", demoEmails[role])
-        .single();
-
-      if (data) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("alamani_user", JSON.stringify(data));
-        }
-        router.push("/dashboard");
-      } else {
-        // Create demo user if not exists
-        const demoNames: Record<string, string> = {
-          admin: "أحمد العامر",
-          designer: "سارة المهندس",
-          engineer: "محمد التنفيذي",
-          inspector: "فاطمة المفتش",
-        };
-        const { data: newUser } = await supabase
-          .from("users")
-          .insert({ email: demoEmails[role], name: demoNames[role], role })
-          .select()
-          .single();
-        if (newUser) {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("alamani_user", JSON.stringify(newUser));
-          }
-          router.push("/dashboard");
-        }
-      }
-    } catch {
-      setError("حدث خطأ في تسجيل الدخول التجريبي");
-    } finally {
-      setLoading(false);
-    }
+    localStorage.setItem("alamani_user", JSON.stringify(demoUsers[role]));
+    router.push("/dashboard");
   };
 
   return (
